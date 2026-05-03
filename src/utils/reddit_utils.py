@@ -5,7 +5,7 @@ import re
 
 
 URL_RE = re.compile(r"https?://\S+")
-MAX_USERS = 20
+MAX_USERS = 10
 MAX_COMMENTS = 20
 MAX_RETRY = 2
 MAX_CONCURRENCY = 3

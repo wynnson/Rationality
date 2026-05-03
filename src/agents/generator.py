@@ -2,7 +2,7 @@ import asyncio
 import json
 
 from services.reddit_service import fetch_users_comment_histories
-from utils.agent_utils import question_binarizer, run_voter
+from utils.agent_utils import parse_model_json, question_binarizer, run_voter
 
 
 async def spawn_debate_agents(url: str, debate_question: str) -> dict:
@@ -23,7 +23,7 @@ async def spawn_debate_agents(url: str, debate_question: str) -> dict:
     options = await question_binarizer(debate_question)
 
     tasks = [
-        run_voter(user, comment_history, debate_question, options)
+        run_voter(user, comment_history, options)
         for user, comment_history in user_comment_histories.items()
     ]
 
@@ -37,9 +37,10 @@ async def spawn_debate_agents(url: str, debate_question: str) -> dict:
         user, res = result
         scores = json.loads(res.choices[0].message.content)
         winning_idx = scores.index(max(scores))
+        winning_option = options["option_a"] if winning_idx == 0 else options["option_b"]
 
         votes[user] = {
-            "option": options[winning_idx],
+            "option": winning_option,
             "score": scores[winning_idx],
         }
 

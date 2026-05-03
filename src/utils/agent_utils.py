@@ -22,12 +22,7 @@ VOTER_TEMPLATE = load_agent_template("vote")
 BINARIZER_TEMPLATE = load_agent_template("question_binarizer")
 
 
-async def run_voter(
-    user: str, 
-    comment_history: list[str], 
-    debate_question: str, 
-    options: list
-):
+async def run_voter(user: str, comment_history: list[str], options: dict):
     """Async runner for each agent.
 
     Args:
@@ -42,10 +37,10 @@ async def run_voter(
 
     user_prompt = f"""
         Question:
-        {debate_question}
+        {options["neutral_question"]}
 
         Options:
-        {json.dumps(options)}
+        {options["option_a"], options["option_b"]}
 
         Vote by returning confidence scores for the options.
     """
@@ -61,14 +56,18 @@ async def run_voter(
     return user, res
 
 
-async def question_binarizer(debate_question: str) -> list:
+async def question_binarizer(debate_question: str) -> dict:
     """Transforms user's debate question into 2 binary options.
 
     Args:
         debate_question: user query
 
     Returns:
-        list: [option 1, option 2]
+        dict: {
+            neutral_question: ...
+            option 1: ...
+            option 2: ...
+        }
     """
     binarizer_prompt = BINARIZER_TEMPLATE.render()
     res = await acompletion(
@@ -80,12 +79,11 @@ async def question_binarizer(debate_question: str) -> list:
     )
 
     content = res.choices[0].message.content
-    options = parse_model_json(content)
-    return [options["option_a"], options["option_b"]]
+    return parse_model_json(content)
 
 
 def parse_model_json(content: str) -> dict:
-    """Remove JSON fences
+    """Removes JSON fences.
     
     Args:
         content: return from LLM
